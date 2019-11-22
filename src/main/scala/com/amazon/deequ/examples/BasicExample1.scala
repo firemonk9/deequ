@@ -21,8 +21,8 @@ import com.amazon.deequ.checks.{Check, CheckLevel, CheckStatus}
 import com.amazon.deequ.constraints.ConstraintStatus
 import com.amazon.deequ.examples.ExampleUtils.{itemsAsDataframe, withSpark}
 import java.util.Date
-import scala.util.matching.Regex
 
+import scala.util.matching.Regex
 import scala.tools.scalap.scalax.rules.Rule
 object Example{
     val UNIQUE="UNIQUE"
@@ -71,13 +71,13 @@ private[examples] object BasicExample1  {
       rule.ruleType match {
         case Example.UNIQUE => Check(getLevel(rule.level),rule.name.getOrElse(rule.ruleType)).hasUniqueness(rule.column.get, (fraction: Double) => raw(rule.operator.get, fraction)(rule.expectedPercent/100))
         case Example.NOT_NULLS => Check(getLevel(rule.level),rule.name.getOrElse(rule.ruleType)).hasCompleteness(rule.column.get, (fraction: Double) => raw(rule.operator.get, fraction)(rule.expectedPercent/100))
-        case Example.MAX_LENGTH => Check(getLevel(rule.level),rule.name.getOrElse(rule.ruleType)).hasMaxLength(rule.column.get, (fraction: Double) => raw(rule.operator.get, fraction)(rule.expectedPercent/100))
-        case Example.MIN_LENGTH => Check(getLevel(rule.level),rule.name.getOrElse(rule.ruleType)).hasMinLength(rule.column.get, (fraction: Double) => raw(rule.operator.get, fraction)(rule.expectedPercent/100))
-        case Example.MEAN_VALUE => Check(getLevel(rule.level),rule.name.getOrElse(rule.ruleType)).hasMean(rule.column.get, (fraction: Double) => raw(rule.operator.get, fraction)(rule.expectedPercent/100))
-        case Example.SUM_VALUE => Check(getLevel(rule.level),rule.name.getOrElse(rule.ruleType)).hasSum(rule.column.get, (fraction: Double) => raw(rule.operator.get, fraction)(rule.expectedPercent/100))
-        case Example.STANDARD_DEVIATION => Check(getLevel(rule.level),rule.name.getOrElse(rule.ruleType)).hasStandardDeviation(rule.column.get, (fraction: Double) => raw(rule.operator.get, fraction)(rule.expectedPercent/100))
+        case Example.MAX_LENGTH => Check(getLevel(rule.level),rule.name.getOrElse(rule.ruleType)).hasMaxLength(rule.column.get, (fraction: Double) => raw(rule.operator.get, fraction)(rule.ruleValue.get/100))
+        case Example.MIN_LENGTH => Check(getLevel(rule.level),rule.name.getOrElse(rule.ruleType)).hasMinLength(rule.column.get, (fraction: Double) => raw(rule.operator.get, fraction)(rule.ruleValue.get/100))
+        case Example.MEAN_VALUE => Check(getLevel(rule.level),rule.name.getOrElse(rule.ruleType)).hasMean(rule.column.get, (fraction: Double) => raw(rule.operator.get, fraction)(rule.ruleValue.get/100))
+        case Example.SUM_VALUE => Check(getLevel(rule.level),rule.name.getOrElse(rule.ruleType)).hasSum(rule.column.get, (fraction: Double) => raw(rule.operator.get, fraction)(rule.ruleValue.get/100))
+        case Example.STANDARD_DEVIATION => Check(getLevel(rule.level),rule.name.getOrElse(rule.ruleType)).hasStandardDeviation(rule.column.get, (fraction: Double) => raw(rule.operator.get, fraction)(rule.ruleValue.get/100))
         case Example.REGULAR_EXPRESSION => Check(getLevel(rule.level),rule.name.getOrElse(rule.ruleType)).hasPattern(rule.column.get,rule.regularExpression.get.r)
-        case Example.TABLE_SIZE => Check(getLevel(rule.level),rule.name.getOrElse(rule.ruleType)).hasSize( (fraction: Long) => rawSize(rule.operator.get, fraction)(rule.expectedPercent/100))
+        case Example.TABLE_SIZE => Check(getLevel(rule.level),rule.name.getOrElse(rule.ruleType)).hasSize( (fraction: Long) => rawSize(rule.operator.get, fraction)(rule.ruleValue.get/100))
       }
     })
   }
@@ -112,7 +112,7 @@ private[examples] object BasicExample1  {
             // at least half of the 'description's should contain a url
             .containsURL("description", _ >= 0.5)
             // half of the items should have less than 10 'numViews'
-            .hasApproxQuantile("numViews", 0.5, _ <= 10)).addCheck(
+            .hasApproxQuantile("numViews", 0.5, _ <= 10)).addChecks(
 
         getRules(List(InputObj(ruleType = Example.UNIQUE,column = Some("id"),None,None,operator = Some("="),
           expectedPercent = 100, name=Some("myTest 1")),
@@ -120,10 +120,15 @@ private[examples] object BasicExample1  {
             expectedPercent = 100, name=Some("myTest 1")),
           InputObj(ruleType = Example.NOT_NULLS,column = Some("id"),None,None,operator = Some("="),
             expectedPercent = 100, name=Some("not nulls id")),
-          InputObj(ruleType = Example.MAX_LENGTH,column = Some("id"),None,None,operator = Some("="),
-            expectedPercent = 100, name=Some("myTest 1"))
+          InputObj(ruleType = Example.MAX_LENGTH,column = Some("productName"),ruleValue=Some(5),None,operator = Some("="),
+            expectedPercent = 100,name=Some("Max length 1")),
+          InputObj(ruleType = Example.MIN_LENGTH,column = Some("productName"),ruleValue=Some(20),None,operator = Some("="),
+            expectedPercent = 100,name=Some("Min Length 1")),
+          InputObj(ruleType = Example.MEAN_VALUE,column = Some("id"),ruleValue=Some(2.5),None,operator = Some("="),
+            expectedPercent = 100,name=Some("Mean Value Length 1"))
 
-        )).head
+
+        ))
       ).addCheck(
 
         getRules(List(InputObj(ruleType = Example.UNIQUE,column = Some("id"),None,None,operator = Some("<"),
