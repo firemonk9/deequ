@@ -128,6 +128,7 @@ private[examples] object BasicExample1  {
             expectedPercent = 100,name=Some("Mean Value Length 1"))
 
 
+
         ))
       ).addCheck(
 
