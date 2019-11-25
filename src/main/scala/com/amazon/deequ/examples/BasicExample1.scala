@@ -127,7 +127,6 @@ private[examples] object BasicExample1  {
           InputObj(ruleType = Example.MEAN_VALUE,column = Some("id"),ruleValue=Some(2.5),None,operator = Some("="),
             expectedPercent = 100,name=Some("Mean Value Length 1"))
 
-
         ))
       ).addCheck(
 
