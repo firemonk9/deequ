@@ -64,7 +64,7 @@ case class ColumnProfiles(
 
 object ColumnProfiles {
 
-  def toJson(columnProfiles: Seq[ColumnProfile]): String = {
+  def toJson(columnProfiles: Seq[ColumnProfile], tableName: Option[String] = None, tableCount: Option[Int] = None): String = {
 
     val json = new JsonObject()
 
@@ -137,6 +137,11 @@ object ColumnProfiles {
     }
 
     json.add("columns", columns)
+    if (tableCount.isDefined)
+      json.add("recordscount", new JsonPrimitive(tableCount.get))
+    if (tableName.isDefined)
+      json.add("tablename", new JsonPrimitive(tableName.get))
+
 
     val gson = new GsonBuilder()
       .setPrettyPrinting()
