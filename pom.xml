@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.amazon.deequ</groupId>
-    <artifactId>deequ</artifactId>
+    <artifactId>dataq_deequ</artifactId>
     <version>1.0.3-SNAPSHOT</version>
 
     <name>deequ</name>

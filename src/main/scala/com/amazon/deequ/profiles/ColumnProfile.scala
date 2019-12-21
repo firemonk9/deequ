@@ -64,6 +64,103 @@ case class ColumnProfiles(
 
 object ColumnProfiles {
 
+
+  def toJsonMap(columnProfilesMap: Map[String, Seq[ColumnProfile]], tableName: Option[String] = None, tableCount: Option[Int] = None): String = {
+
+
+    val jsonAll = new JsonObject()
+    val columns = new JsonArray()
+
+    columnProfilesMap.keys.map(tbl => {
+
+      val columnProfiles = columnProfilesMap.get(tbl).get
+      val json = new JsonObject()
+
+      columnProfiles.foreach { case profile =>
+
+
+        val columnProfileJson = new JsonObject()
+        columnProfileJson.addProperty("column", profile.column)
+        columnProfileJson.addProperty("dataType", profile.dataType.toString)
+        columnProfileJson.addProperty("isDataTypeInferred", profile.isDataTypeInferred.toString)
+
+        if (profile.typeCounts.nonEmpty) {
+          val typeCountsJson = new JsonObject()
+          profile.typeCounts.foreach { case (typeName, count) =>
+            typeCountsJson.addProperty(typeName, count.toString)
+          }
+        }
+
+        columnProfileJson.addProperty("completeness", profile.completeness)
+        columnProfileJson.addProperty("approximateNumDistinctValues",
+          profile.approximateNumDistinctValues)
+
+        if (profile.histogram.isDefined) {
+          val histogram = profile.histogram.get
+          val histogramJson = new JsonArray()
+
+          histogram.values.foreach { case (name, distributionValue) =>
+            val histogramEntry = new JsonObject()
+            histogramEntry.addProperty("value", name)
+            histogramEntry.addProperty("count", distributionValue.absolute)
+            histogramEntry.addProperty("ratio", distributionValue.ratio)
+            histogramJson.add(histogramEntry)
+          }
+
+          columnProfileJson.add("histogram", histogramJson)
+        }
+
+        profile match {
+          case numericColumnProfile: NumericColumnProfile =>
+            numericColumnProfile.mean.foreach { mean =>
+              columnProfileJson.addProperty("mean", mean)
+            }
+            numericColumnProfile.maximum.foreach { maximum =>
+              columnProfileJson.addProperty("maximum", maximum)
+            }
+            numericColumnProfile.minimum.foreach { minimum =>
+              columnProfileJson.addProperty("minimum", minimum)
+            }
+            numericColumnProfile.sum.foreach { sum =>
+              columnProfileJson.addProperty("sum", sum)
+            }
+            numericColumnProfile.stdDev.foreach { stdDev =>
+              columnProfileJson.addProperty("stdDev", stdDev)
+            }
+
+            val approxPercentilesJson = new JsonArray()
+            numericColumnProfile.approxPercentiles.foreach {
+              _.foreach { percentile =>
+                approxPercentilesJson.add(new JsonPrimitive(percentile))
+              }
+            }
+
+            columnProfileJson.add("approxPercentiles", approxPercentilesJson)
+
+          case _ =>
+        }
+
+        columns.add(columnProfileJson)
+
+      }
+      json.add("columns", columns)
+      if (tableCount.isDefined)
+        json.add("recordscount", new JsonPrimitive(tableCount.get))
+      if (tableName.isDefined)
+        json.add("tablename", new JsonPrimitive(tableName.get))
+
+      jsonAll.add(tbl,json)
+
+    })
+
+    val gson = new GsonBuilder()
+      .setPrettyPrinting()
+      .create()
+
+    gson.toJson(jsonAll)
+  }
+
+
   def toJson(columnProfiles: Seq[ColumnProfile], tableName: Option[String] = None, tableCount: Option[Int] = None): String = {
 
     val json = new JsonObject()
