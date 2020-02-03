@@ -67,11 +67,10 @@ object ColumnProfiles {
 
   def toJsonMap(columnProfilesMap: Map[String, Seq[ColumnProfile]], tableName: Option[String] = None, tableCount: Option[Int] = None): String = {
 
-
     val jsonAll = new JsonObject()
-    val columns = new JsonArray()
-
     columnProfilesMap.keys.map(tbl => {
+
+      val columns = new JsonArray()
 
       val columnProfiles = columnProfilesMap.get(tbl).get
       val json = new JsonObject()
