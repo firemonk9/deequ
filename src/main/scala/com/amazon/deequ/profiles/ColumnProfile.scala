@@ -75,8 +75,6 @@ object ColumnProfiles {
       val columnProfiles = columnProfilesMap.get(tbl).get
       val json = new JsonObject()
 
-
-
       columnProfiles.foreach { case profile =>
 
 
