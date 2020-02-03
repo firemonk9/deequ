@@ -76,6 +76,7 @@ object ColumnProfiles {
       val json = new JsonObject()
 
 
+
       columnProfiles.foreach { case profile =>
 
 
