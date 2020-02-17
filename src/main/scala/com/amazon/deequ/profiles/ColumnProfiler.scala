@@ -22,7 +22,8 @@ import com.amazon.deequ.analyzers.runners.{AnalysisRunBuilder, AnalysisRunner, A
 import com.amazon.deequ.metrics._
 import com.amazon.deequ.repository.{MetricsRepository, ResultKey}
 import org.apache.spark.sql.DataFrame
-import org.apache.spark.sql.types.{BooleanType, DecimalType, DoubleType, FloatType, IntegerType, LongType, ShortType, StringType, StructType, TimestampType, DataType => SparkDataType}
+import org.apache.spark.sql.types.{BooleanType, DateType, DecimalType, DoubleType, FloatType, IntegerType, LongType, ShortType, StringType, StructType, TimestampType, DataType => SparkDataType}
+
 import scala.util.Success
 
 private[deequ] case class GenericColumnStatistics(
@@ -31,7 +32,12 @@ private[deequ] case class GenericColumnStatistics(
     knownTypes: Map[String, DataTypeInstances.Value],
     typeDetectionHistograms: Map[String, Map[String, Long]],
     approximateNumDistincts: Map[String, Long],
-    completenesses: Map[String, Double]) {
+    completenesses: Map[String, Double],
+    minLength: Map[String, Double],
+    maxLength: Map[String, Double],
+    avgLength: Map[String, Double],
+    minValue: Map[String, String],
+    maxValue: Map[String, String]) {
 
   def typeOf(column: String): DataTypeInstances.Value = {
     val inferredAndKnown = inferredTypes ++ knownTypes
@@ -209,7 +215,7 @@ object ColumnProfiler {
         val name = field.name
 
         if (field.dataType == StringType) {
-          Seq(Completeness(name), ApproxCountDistinct(name), DataType(name))
+          Seq(Completeness(name), ApproxCountDistinct(name), DataType(name),MinLength(name),MaxLength(name),AvgLength(name),MinimumStr(name),MaximumStr(name))
         } else {
           Seq(Completeness(name), ApproxCountDistinct(name))
         }
@@ -381,7 +387,7 @@ object ColumnProfiler {
           case ShortType | LongType | IntegerType => Integral
           case DecimalType() | FloatType | DoubleType => Fractional
           case BooleanType => Boolean
-          case TimestampType => String  // TODO We should have support for dates in deequ...
+          case TimestampType | DateType => String  // TODO We should have support for dates in deequ...
           case _ =>
             println(s"Unable to map type ${field.dataType}")
             Unknown
@@ -391,8 +397,41 @@ object ColumnProfiler {
       }
       .toMap
 
+    val minLength = results.metricMap
+      .collect { case (analyzer: MinLength, metric: DoubleMetric) =>
+        analyzer.column -> metric.value.get
+      }
+
+    val maxLength = results.metricMap
+      .collect { case (analyzer: MaxLength, metric: DoubleMetric) =>
+        analyzer.column -> metric.value.get
+      }
+
+    val avgLength = results.metricMap
+      .collect { case (analyzer: AvgLength, metric: DoubleMetric) =>
+        analyzer.column -> metric.value.get/numRecords
+      }
+
+    val minValue = results.metricMap
+      .collect { case (analyzer: MinimumStr, metric: StringMetric) =>
+        analyzer.column -> metric.value.get
+      }
+
+    val maxValue = results.metricMap
+      .collect { case (analyzer: MaximumStr, metric: StringMetric) =>
+        analyzer.column -> metric.value.get
+      }
+
+    /**
+     * minLength: Map[String, Double],
+     * maxLength: Map[String, Double],
+     * avgLength: Map[String, Double],
+     * minValue: Map[String, Double],
+     * maxValue: Map[String, Double]) {
+     */
+
     GenericColumnStatistics(numRecords, inferredTypes, knownTypes, typeDetectionHistograms,
-      approximateNumDistincts, completenesses)
+      approximateNumDistincts, completenesses,minLength,maxLength, avgLength, minValue, maxValue)
   }
 
 
@@ -627,6 +666,12 @@ object ColumnProfiler {
         val dataType = genericStats.typeOf(name)
         val isDataTypeInferred = genericStats.inferredTypes.contains(name)
         val histogram = categoricalStats.histograms.get(name)
+        val minLength = genericStats.minLength(name)
+        val maxLength = genericStats.maxLength(name)
+        val avgLength = genericStats.avgLength(name)
+        val minValue = genericStats.minValue(name)
+        val maxValue = genericStats.maxValue(name)
+
 
         val typeCounts = genericStats.typeDetectionHistograms.getOrElse(name, Map.empty)
 
@@ -656,7 +701,13 @@ object ColumnProfiler {
               dataType,
               isDataTypeInferred,
               typeCounts,
-              histogram)
+              histogram,
+              minLength,
+              maxLength ,
+              avgLength,
+              minValue,
+              maxValue
+            )
         }
 
         name -> profile

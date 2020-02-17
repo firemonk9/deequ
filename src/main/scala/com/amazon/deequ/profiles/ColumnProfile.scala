@@ -38,7 +38,12 @@ case class StandardColumnProfile(
     dataType: DataTypeInstances.Value,
     isDataTypeInferred: Boolean,
     typeCounts: Map[String, Long],
-    histogram: Option[Distribution])
+    histogram: Option[Distribution],
+    minLength:Double,
+    maxLength:Double,
+    avgLength:Double,
+    minValue:String,
+    maxValue:String)
   extends ColumnProfile
 
 case class NumericColumnProfile(

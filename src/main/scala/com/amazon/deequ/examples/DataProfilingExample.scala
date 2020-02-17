@@ -37,7 +37,10 @@ private[examples] object DataProfilingExample extends App {
       RawData("thingE", "20", "DELAYED", "false")
     ))
 
-    val rawData = session.createDataFrame(rows)
+    import org.apache.spark.sql.functions._
+    val rawData = session.createDataFrame(rows)//.withColumn("curr_Date",current_timestamp())
+    rawData.show()
+    rawData.printSchema()
 
     /* Make deequ profile this data. It will execute the three passes over the data and avoid
        any shuffles. */

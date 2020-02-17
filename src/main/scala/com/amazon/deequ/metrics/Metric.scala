@@ -22,6 +22,7 @@ object Entity extends Enumeration {
   val Dataset, Column, Mutlicolumn = Value
 }
 
+
 /** Common trait for all data quality metrics */
 trait Metric[T] {
   val entity: Entity.Value
@@ -47,6 +48,17 @@ case class DoubleMetric(
 
   override def flatten(): Seq[DoubleMetric] = Seq(this)
 }
+case class StringMetric(
+                         entity: Entity.Value,
+                         name: String,
+                         instance: String,
+                         value: Try[String])
+  extends Metric[String] {
+  override def flatten(): Seq[DoubleMetric] = null
+
+}
+
+
 
 case class KeyedDoubleMetric(
     entity: Entity.Value,

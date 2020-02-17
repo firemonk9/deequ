@@ -17,7 +17,7 @@
 package com.amazon.deequ.analyzers
 
 import com.amazon.deequ.analyzers.Analyzers._
-import com.amazon.deequ.metrics.{DoubleMetric, Entity, Metric}
+import com.amazon.deequ.metrics.{DoubleMetric, Entity, Metric, StringMetric}
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.{Column, DataFrame, Row}
@@ -50,6 +50,11 @@ trait State[S <: State[S]] {
 /** A state which produces a double valued metric  */
 trait DoubleValuedState[S <: DoubleValuedState[S]] extends State[S] {
   def metricValue(): Double
+}
+
+/** A state which produces a double valued metric  */
+trait StringValuedState[S <: StringValuedState[S]] extends State[S] {
+  def metricValue(): String
 }
 
 /** Common trait for all analyzers which generates metrics from states computed on data frames */
@@ -224,6 +229,37 @@ abstract class StandardScanShareableAnalyzer[S <: DoubleValuedState[_]](
     Seq.empty
   }
 }
+
+/** A scan-shareable analyzer that produces a DoubleMetric */
+abstract class StandardStringScanShareableAnalyzer[S <: StringValuedState[_]](
+                                                                         name: String,
+                                                                         instance: String,
+                                                                         entity: Entity.Value = Entity.Column)
+  extends ScanShareableAnalyzer[S, StringMetric] {
+
+  override def computeMetricFrom(state: Option[S]): StringMetric = {
+    state match {
+      case Some(theState) =>
+        metricFromStr(theState.metricValue(), name, instance, entity)
+      case _ =>
+        stringFromEmpty(this, name, instance, entity)
+    }
+  }
+
+  override private[deequ] def toFailureMetric(exception: Exception): StringMetric = {
+    stringFromFailure(exception, name, instance, entity)
+  }
+
+  override def preconditions: Seq[StructType => Unit] = {
+    additionalPreconditions() ++ super.preconditions
+  }
+
+  protected def additionalPreconditions(): Seq[StructType => Unit] = {
+    Seq.empty
+  }
+}
+
+
 
 /** A state for computing ratio-based metrics,
   * contains #rows that match a predicate and overall #rows */
@@ -441,6 +477,17 @@ private[deequ] object Analyzers {
     DoubleMetric(entity, name, instance, Success(value))
   }
 
+
+  def metricFromStr(
+                       value: String,
+                       name: String,
+                       instance: String,
+                       entity: Entity.Value = Entity.Column)
+  : StringMetric = {
+
+    StringMetric(entity, name, instance, Success(value))
+  }
+
   def emptyStateException(analyzer: Analyzer[_, _]): EmptyStateException = {
     new EmptyStateException(s"Empty state for analyzer $analyzer, all input values were NULL.")
   }
@@ -454,6 +501,15 @@ private[deequ] object Analyzers {
     metricFromFailure(emptyStateException(analyzer), name, instance, entity)
   }
 
+  def stringFromEmpty(
+                       analyzer: Analyzer[_, _],
+                       name: String,
+                       instance: String,
+                       entity: Entity.Value = Entity.Column)
+  : StringMetric = {
+    stringFromFailure(emptyStateException(analyzer), name, instance, entity)
+  }
+
   def metricFromFailure(
       exception: Throwable,
       name: String,
@@ -462,6 +518,18 @@ private[deequ] object Analyzers {
     : DoubleMetric = {
 
     DoubleMetric(entity, name, instance, Failure(
+      MetricCalculationException.wrapIfNecessary(exception)))
+  }
+
+
+  def stringFromFailure(
+                         exception: Throwable,
+                         name: String,
+                         instance: String,
+                         entity: Entity.Value = Entity.Column)
+  : StringMetric = {
+
+    StringMetric(entity, name, instance, Failure(
       MetricCalculationException.wrapIfNecessary(exception)))
   }
 }
