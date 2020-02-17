@@ -18,7 +18,7 @@ package com.amazon.deequ.analyzers
 
 import com.amazon.deequ.analyzers.Analyzers._
 import com.amazon.deequ.analyzers.Preconditions.{hasColumn, isString}
-import org.apache.spark.sql.functions.{length, avg}
+import org.apache.spark.sql.functions.{length, sum}
 import org.apache.spark.sql.types.{DoubleType, StructType}
 import org.apache.spark.sql.{Column, Row}
 
@@ -38,7 +38,7 @@ case class AvgLength(column: String, where: Option[String] = None)
   extends StandardScanShareableAnalyzer[AvgState]("AvgLength", column) {
 
   override def aggregationFunctions(): Seq[Column] = {
-    avg(length(conditionalSelection(column, where))).cast(DoubleType) :: Nil
+    sum(length(conditionalSelection(column, where))).cast(DoubleType) :: Nil
   }
 
   override def fromAggregationResult(result: Row, offset: Int): Option[AvgState] = {

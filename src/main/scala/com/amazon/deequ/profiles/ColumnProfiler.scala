@@ -422,14 +422,6 @@ object ColumnProfiler {
         analyzer.column -> metric.value.get
       }
 
-    /**
-     * minLength: Map[String, Double],
-     * maxLength: Map[String, Double],
-     * avgLength: Map[String, Double],
-     * minValue: Map[String, Double],
-     * maxValue: Map[String, Double]) {
-     */
-
     GenericColumnStatistics(numRecords, inferredTypes, knownTypes, typeDetectionHistograms,
       approximateNumDistincts, completenesses,minLength,maxLength, avgLength, minValue, maxValue)
   }

@@ -34,8 +34,8 @@ class ConstraintRulesTest extends WordSpec with FixtureSupport with SparkContext
   "CompleteIfCompleteRule" should {
     "be applied correctly" in {
 
-      val complete = StandardColumnProfile("col1", 1.0, 100, String, false, Map.empty, None)
-      val incomplete = StandardColumnProfile("col1", .25, 100, String, false, Map.empty, None)
+      val complete = StandardColumnProfile("col1", 1.0, 100, String, false, Map.empty, None,0.0,0.0,0.0,"","")
+      val incomplete = StandardColumnProfile("col1", .25, 100, String, false, Map.empty, None,0.0,0.0,0.0,"","")
 
       assert(CompleteIfCompleteRule().shouldBeApplied(complete, 1000))
       assert(!CompleteIfCompleteRule().shouldBeApplied(incomplete, 1000))
@@ -91,8 +91,8 @@ class ConstraintRulesTest extends WordSpec with FixtureSupport with SparkContext
   "RetainCompletenessRule" should {
     "be applied correctly" in {
 
-      val complete = StandardColumnProfile("col1", 1.0, 100, String, false, Map.empty, None)
-      val incomplete = StandardColumnProfile("col1", .25, 100, String, false, Map.empty, None)
+      val complete = StandardColumnProfile("col1", 1.0, 100, String, false, Map.empty, None,0.0,0.0,0.0,"","")
+      val incomplete = StandardColumnProfile("col1", .25, 100, String, false, Map.empty, None,0.0,0.0,0.0,"","")
 
       assert(!RetainCompletenessRule().shouldBeApplied(complete, 1000))
       assert(RetainCompletenessRule().shouldBeApplied(incomplete, 1000))
@@ -150,10 +150,10 @@ class ConstraintRulesTest extends WordSpec with FixtureSupport with SparkContext
   "UniqueIfApproximatelyUniqueRule" should {
     "be applied correctly" in {
 
-      val unique = StandardColumnProfile("col1", 1.0, 100, String, false, Map.empty, None)
-      val maybeUnique = StandardColumnProfile("col1", 1.0, 95, String, false, Map.empty, None)
-      val maybeNonUnique = StandardColumnProfile("col1", 1.0, 91, String, false, Map.empty, None)
-      val nonUnique = StandardColumnProfile("col1", 1.0, 20, String, false, Map.empty, None)
+      val unique = StandardColumnProfile("col1", 1.0, 100, String, false, Map.empty, None,0.0,0.0,0.0,"","")
+      val maybeUnique = StandardColumnProfile("col1", 1.0, 95, String, false, Map.empty, None,0.0,0.0,0.0,"","")
+      val maybeNonUnique = StandardColumnProfile("col1", 1.0, 91, String, false, Map.empty, None,0.0,0.0,0.0,"","")
+      val nonUnique = StandardColumnProfile("col1", 1.0, 20, String, false, Map.empty, None,0.0,0.0,0.0,"","")
 
       assert(UniqueIfApproximatelyUniqueRule().shouldBeApplied(unique, 100))
       assert(UniqueIfApproximatelyUniqueRule().shouldBeApplied(maybeUnique, 100))
@@ -213,20 +213,20 @@ class ConstraintRulesTest extends WordSpec with FixtureSupport with SparkContext
   "RetainTypeRule" should {
     "be applied correctly" in {
 
-      val string = StandardColumnProfile("col1", 1.0, 100, String, true, Map.empty, None)
-      val boolean = StandardColumnProfile("col1", 1.0, 100, Boolean, true, Map.empty, None)
-      val fractional = StandardColumnProfile("col1", 1.0, 100, Fractional, true, Map.empty, None)
-      val integer = StandardColumnProfile("col1", 1.0, 100, Integral, true, Map.empty, None)
-      val unknown = StandardColumnProfile("col1", 1.0, 100, Unknown, true, Map.empty, None)
+      val string = StandardColumnProfile("col1", 1.0, 100, String, true, Map.empty, None,0.0,0.0,0.0,"","")
+      val boolean = StandardColumnProfile("col1", 1.0, 100, Boolean, true, Map.empty, None,0.0,0.0,0.0,"","")
+      val fractional = StandardColumnProfile("col1", 1.0, 100, Fractional, true, Map.empty, None,0.0,0.0,0.0,"","")
+      val integer = StandardColumnProfile("col1", 1.0, 100, Integral, true, Map.empty, None,0.0,0.0,0.0,"","")
+      val unknown = StandardColumnProfile("col1", 1.0, 100, Unknown, true, Map.empty, None,0.0,0.0,0.0,"","")
 
       val stringNonInferred = StandardColumnProfile("col1", 1.0, 100, String, false, Map.empty,
-        None)
+        None,0.0,0.0,0.0,"","")
       val booleanNonInferred = StandardColumnProfile("col1", 1.0, 100, Boolean, false, Map.empty,
-        None)
+        None,0.0,0.0,0.0,"","")
       val fractionalNonInferred = StandardColumnProfile("col1", 1.0, 100, Fractional, false,
-        Map.empty, None)
+        Map.empty, None,0.0,0.0,0.0,"","")
       val integerNonInferred = StandardColumnProfile("col1", 1.0, 100, Integral, false,
-        Map.empty, None)
+        Map.empty, None,0.0,0.0,0.0,"","")
 
       assert(!RetainTypeRule().shouldBeApplied(string, 100))
       assert(!RetainTypeRule().shouldBeApplied(unknown, 100))
@@ -318,13 +318,13 @@ class ConstraintRulesTest extends WordSpec with FixtureSupport with SparkContext
       val noDistribution = Distribution(Map.empty, 0)
 
       val stringWithNonSkewedDist = StandardColumnProfile("col1", 1.0, 100, String, false,
-        Map.empty, Some(nonSkewedDist))
+        Map.empty, Some(nonSkewedDist),0.0,0.0,0.0,"","")
       val stringWithSkewedDist = StandardColumnProfile("col1", 1.0, 100, String, false,
-        Map.empty, Some(skewedDist))
-      val stringNoDist = StandardColumnProfile("col1", 1.0, 95, String, false, Map.empty, None)
-      val boolNoDist = StandardColumnProfile("col1", 1.0, 94, Boolean, false, Map.empty, None)
+        Map.empty, Some(skewedDist),0.0,0.0,0.0,"","")
+      val stringNoDist = StandardColumnProfile("col1", 1.0, 95, String, false, Map.empty, None,0.0,0.0,0.0,"","")
+      val boolNoDist = StandardColumnProfile("col1", 1.0, 94, Boolean, false, Map.empty, None,0.0,0.0,0.0,"","")
       val boolWithEmptyDist = StandardColumnProfile("col1", 1.0, 20, Boolean, false, Map.empty,
-        Some(noDistribution))
+        Some(noDistribution),0.0,0.0,0.0,"","")
 
       assert(CategoricalRangeRule().shouldBeApplied(stringWithNonSkewedDist, 100))
 
@@ -457,17 +457,17 @@ class ConstraintRulesTest extends WordSpec with FixtureSupport with SparkContext
       val noDistribution = Distribution(Map.empty, 0)
 
       val stringWithNonSkewedDistWithFractionalCategoricalRange = StandardColumnProfile("col1", 1.0,
-        100, String, false, Map.empty, Some(nonSkewedDistWithFractionalCategoricalRange))
+        100, String, false, Map.empty, Some(nonSkewedDistWithFractionalCategoricalRange),0.0,0.0,0.0,"","")
       val stringWithNonSkewedDistWithActualCategoricalRange = StandardColumnProfile("col1", 1.0,
-        100, String, false, Map.empty, Some(nonSkewedDistWithActualCategoricalRange))
+        100, String, false, Map.empty, Some(nonSkewedDistWithActualCategoricalRange),0.0,0.0,0.0,"","")
       val stringWithSomewhatSkewedDist = StandardColumnProfile("col1", 1.0, 100, String, false,
-        Map.empty, Some(somewhatSkewedDist))
+        Map.empty, Some(somewhatSkewedDist),0.0,0.0,0.0,"","")
       val stringWithSkewedDist = StandardColumnProfile("col1", 1.0, 100, String, false,
-        Map.empty, Some(skewedDist))
-      val stringNoDist = StandardColumnProfile("col1", 1.0, 95, String, false, Map.empty, None)
-      val boolNoDist = StandardColumnProfile("col1", 1.0, 94, Boolean, false, Map.empty, None)
+        Map.empty, Some(skewedDist),0.0,0.0,0.0,"","")
+      val stringNoDist = StandardColumnProfile("col1", 1.0, 95, String, false, Map.empty, None,0.0,0.0,0.0,"","")
+      val boolNoDist = StandardColumnProfile("col1", 1.0, 94, Boolean, false, Map.empty, None,0.0,0.0,0.0,"","")
       val boolWithEmptyDist = StandardColumnProfile("col1", 1.0, 20, Boolean, false, Map.empty,
-        Some(noDistribution))
+        Some(noDistribution),0.0,0.0,0.0,"","")
 
 
       assert(FractionalCategoricalRangeRule().shouldBeApplied(stringWithSomewhatSkewedDist, 100))

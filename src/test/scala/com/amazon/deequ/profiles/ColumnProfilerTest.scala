@@ -69,7 +69,13 @@ class ColumnProfilerTest extends WordSpec with Matchers with SparkContextSpec
           "Unknown" -> 2,
           "String" -> 4
         ),
-        None)
+        None,
+        0.0,
+      0.0,
+        0.0,
+        "",
+        ""
+      )
 
       assert(actualColumnProfile == expectedColumnProfile)
     }
@@ -169,7 +175,12 @@ class ColumnProfilerTest extends WordSpec with Matchers with SparkContextSpec
         Some(Distribution(Map(
           "d" -> DistributionValue(1, 0.16666666666666666),
           "f" -> DistributionValue(3, 0.5),
-          NullFieldReplacement -> DistributionValue(2, 0.3333333333333333)), 3)))
+          NullFieldReplacement -> DistributionValue(2, 0.3333333333333333)), 3)),
+        0.0,
+        0.0,
+        0.0,
+      "",
+      "")
 
       assert(actualColumnProfile == expectedColumnProfile)
     }
