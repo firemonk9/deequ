@@ -215,9 +215,9 @@ object ColumnProfiler {
         val name = field.name
 
         if (field.dataType == StringType) {
-          Seq(Completeness(name), ApproxCountDistinct(name), DataType(name),MinLength(name),MaxLength(name),AvgLength(name),MinimumStr(name),MaximumStr(name))
+          Seq(AbsCompleteness(name), ApproxCountDistinct(name), DataType(name),MinLength(name),MaxLength(name),AvgLength(name),MinimumStr(name),MaximumStr(name))
         } else {
-          Seq(Completeness(name), ApproxCountDistinct(name))
+          Seq(AbsCompleteness(name), ApproxCountDistinct(name))
         }
       }
   }
@@ -375,7 +375,7 @@ object ColumnProfiler {
       }
 
     val completenesses = results.metricMap
-      .collect { case (analyzer: Completeness, metric: DoubleMetric) =>
+      .collect { case (analyzer: AbsCompleteness, metric: DoubleMetric) =>
         analyzer.column -> metric.value.get
       }
 

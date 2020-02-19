@@ -39,12 +39,34 @@ case class ApproxCountDistinctState(words: Array[Long])
   }
 }
 
+
+
 /**
   * Compute approximated count distinct with HyperLogLogPlusPlus.
   *
   * @param column Which column to compute this aggregation on.
   */
 case class ApproxCountDistinct(column: String, where: Option[String] = None)
+  extends StandardScanShareableAnalyzer[ApproxCountDistinctState]("ApproxCountDistinct", column) {
+
+  override def aggregationFunctions(): Seq[Column] = {
+    stateful_approx_count_distinct(conditionalSelection(column, where)) :: Nil
+  }
+
+  override def fromAggregationResult(result: Row, offset: Int): Option[ApproxCountDistinctState] = {
+
+    ifNoNullsIn(result, offset) { _ =>
+      DeequHyperLogLogPlusPlusUtils.wordsFromBytes(result.getAs[Array[Byte]](offset))
+    }
+  }
+
+  override protected def additionalPreconditions(): Seq[StructType => Unit] = {
+    hasColumn(column) :: Nil
+  }
+}
+
+
+case class AbsApproxCountDistinct(column: String, where: Option[String] = None)
   extends StandardScanShareableAnalyzer[ApproxCountDistinctState]("ApproxCountDistinct", column) {
 
   override def aggregationFunctions(): Seq[Column] = {

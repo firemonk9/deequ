@@ -262,6 +262,21 @@ abstract class StandardStringScanShareableAnalyzer[S <: StringValuedState[_]](
 
 
 /** A state for computing ratio-based metrics,
+ * contains #rows that match a predicate and overall #rows */
+case class AbsNumMatchesAndCount(numMatches: Long, count: Long)
+  extends DoubleValuedState[NumMatchesAndCount] {
+
+  override def sum(other: NumMatchesAndCount): NumMatchesAndCount = {
+    NumMatchesAndCount(numMatches + other.numMatches, count + other.count)
+  }
+
+  override def metricValue(): Double = {
+      numMatches.toDouble
+  }
+}
+
+
+/** A state for computing ratio-based metrics,
   * contains #rows that match a predicate and overall #rows */
 case class NumMatchesAndCount(numMatches: Long, count: Long)
   extends DoubleValuedState[NumMatchesAndCount] {

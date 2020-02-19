@@ -38,7 +38,7 @@ private[examples] object DataProfilingExample extends App {
     ))
 
     import org.apache.spark.sql.functions._
-    val rawData = session.createDataFrame(rows)//.withColumn("curr_Date",current_timestamp())
+    val rawData = session.createDataFrame(rows).withColumn("curr_Date",current_timestamp())
     rawData.show()
     rawData.printSchema()
 
