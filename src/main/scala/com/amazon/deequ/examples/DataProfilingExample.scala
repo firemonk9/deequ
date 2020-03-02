@@ -55,7 +55,8 @@ private[examples] object DataProfilingExample extends App {
       println(s"Column '$productName':\n " +
         s"\tcompleteness: ${profile.completeness}\n" +
         s"\tapproximate number of distinct values: ${profile.approximateNumDistinctValues}\n" +
-        s"\tdatatype: ${profile.dataType}\n")
+        s"\tdatatype: ${profile.dataType}\n" +
+        s"\thistogram: ${profile.histogram}\n")
     }
 
     /* For numeric columns, we get descriptive statistics */

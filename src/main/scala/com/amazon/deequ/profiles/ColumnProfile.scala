@@ -18,6 +18,7 @@ package com.amazon.deequ.profiles
 
 import com.amazon.deequ.analyzers.DataTypeInstances
 import com.amazon.deequ.metrics.Distribution
+import com.amazon.deequ.profiles.ColumnProfiles.getHist
 import com.google.gson.{GsonBuilder, JsonArray, JsonObject, JsonPrimitive}
 
 /* Profiling results for the columns which will be given to the constraint suggestion engine */
@@ -70,7 +71,7 @@ case class StandardColumnProfile(
     completeness: Double,
     approximateNumDistinctValues: Long,
     dataType: DataTypeInstances.Value,
-    dataTypeAct:String,
+
     isDataTypeInferred: Boolean,
     typeCounts: Map[String, Long],
     histogram: Option[Distribution],
@@ -78,7 +79,8 @@ case class StandardColumnProfile(
     maxLength:Double,
     avgLength:Double,
     minValue:String,
-    maxValue:String)
+    maxValue:String,
+    dataTypeAct:String="")
   extends ColumnProfile
 
 case class NumericColumnProfile(
@@ -86,7 +88,7 @@ case class NumericColumnProfile(
     completeness: Double,
     approximateNumDistinctValues: Long,
     dataType: DataTypeInstances.Value,
-    dataTypeAct:String,
+
     isDataTypeInferred: Boolean,
     typeCounts: Map[String, Long],
     histogram: Option[Distribution],
@@ -95,7 +97,8 @@ case class NumericColumnProfile(
     minimum: Option[Double],
     sum: Option[Double],
     stdDev: Option[Double],
-    approxPercentiles: Option[Seq[Double]])
+    approxPercentiles: Option[Seq[Double]],
+    dataTypeAct:String="")
   extends ColumnProfile
 
 case class ColumnProfiles(
@@ -106,10 +109,15 @@ case class ColumnProfiles(
 object ColumnProfiles {
 
 
+  def getHist(columnProfiles: Seq[ColumnProfile], str: String): Option[Distribution] = {
+    columnProfiles.filter(a=>a.column == str).head.histogram
+  }
+
+
   def toJsonMap(columnProfilesMap: Map[String, Seq[ColumnProfile]], tableName: Option[String] = None, tableCount: Option[Int] = None): String = {
 
     val jsonAll = new JsonObject()
-    columnProfilesMap.keys.map(tbl => {
+    columnProfilesMap.keys.filter(a=> !a.endsWith(ColumnProfiler.COL_SUF)).map(tbl => {
 
       val columns = new JsonArray()
 
@@ -149,6 +157,24 @@ object ColumnProfiles {
 
           columnProfileJson.add("histogram", histogramJson)
         }
+        if(profile.dataTypeAct == "string"){
+          val histDist = getHist(columnProfiles,profile.column+ColumnProfiler.COL_SUF)
+          if(histDist.isDefined){
+            val histogram =histDist.get
+            val histogramJson = new JsonArray()
+
+            histogram.values.foreach { case (name, distributionValue) =>
+              val histogramEntry = new JsonObject()
+              histogramEntry.addProperty("value", name)
+              histogramEntry.addProperty("count", distributionValue.absolute)
+              histogramEntry.addProperty("ratio", distributionValue.ratio)
+              histogramJson.add(histogramEntry)
+            }
+
+            columnProfileJson.add("mask_histogram", histogramJson)
+          }
+        }
+
 
         profile match {
           case numericColumnProfile: NumericColumnProfile =>

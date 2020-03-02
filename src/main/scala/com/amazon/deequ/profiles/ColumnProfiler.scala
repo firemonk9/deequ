@@ -22,6 +22,7 @@ import com.amazon.deequ.analyzers.runners.{AnalysisRunBuilder, AnalysisRunner, A
 import com.amazon.deequ.metrics._
 import com.amazon.deequ.repository.{MetricsRepository, ResultKey}
 import org.apache.spark.sql.DataFrame
+import org.apache.spark.sql.functions.unix_timestamp
 import org.apache.spark.sql.types.{BooleanType, DateType, DecimalType, DoubleType, FloatType, IntegerType, LongType, ShortType, StringType, StructType, TimestampType, DataType => SparkDataType}
 
 import scala.util.Success
@@ -75,6 +76,24 @@ case class DateCols(data:DataFrame, colsMap:Map[String,String])
 object ColumnProfiler {
 
   val DEFAULT_CARDINALITY_THRESHOLD = 120
+  val COL_SUF = "_12ACD1223"
+
+  def addStringFormat(data: DataFrame): DataFrame = {
+    import org.apache.spark.sql.functions.regexp_replace
+    val strColsList = data.schema.filter(a => a.dataType.simpleString == "string")
+    val nndata = strColsList.foldLeft(data) { (tempDF, listValue) => {
+      listValue.dataType.simpleString match {
+        case "string" => {
+
+          val t = tempDF.withColumn(listValue.name+ COL_SUF, regexp_replace(tempDF(listValue.name), "[a-zA-Z]", "A"))
+          t.withColumn(listValue.name + COL_SUF, regexp_replace(t(listValue.name + COL_SUF), "[0-9]", "N"))
+        }
+        case _ => tempDF
+      }
+    }
+    }
+    nndata
+  }
 
   def datesToNumeric(data:DataFrame):DateCols={
     import org.apache.spark.sql.functions.unix_timestamp
@@ -114,7 +133,8 @@ object ColumnProfiler {
     : ColumnProfiles = {
 
     val dataDates =     datesToNumeric(dataT)
-    val data = dataDates.data
+    val data = addStringFormat(dataDates.data)
+
 
     // Ensure that all desired columns exist
     restrictToColumns.foreach { restrictToColumns =>
