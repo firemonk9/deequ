@@ -30,7 +30,7 @@ class FilterableCheckTest extends WordSpec with Matchers with SparkContextSpec w
         .isComplete("col1")
         .isComplete("col2").where("marketplace = 'EU'")
         .hasCompleteness("col3", _ >= 0.9).where("marketplace = 'NA'")
-        .satisfies("someCol > 5", "const1")
+        .satisfies("someCol > 5 && col2 is null", "const1")
         .satisfies("someCol > 10", "const2").where("marketplace = 'EU'")
 
       val completenessAnalyzers =

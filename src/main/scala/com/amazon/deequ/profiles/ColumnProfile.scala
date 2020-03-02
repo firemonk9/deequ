@@ -26,16 +26,51 @@ abstract class ColumnProfile {
   def completeness: Double
   def approximateNumDistinctValues: Long
   def dataType: DataTypeInstances.Value
+  def dataTypeAct: String
   def isDataTypeInferred: Boolean
   def typeCounts: Map[String, Long]
   def histogram: Option[Distribution]
 }
+
+case class StandardColumnProfileCustom(
+                                  column: String,
+                                  completeness: Double,
+                                  approximateNumDistinctValues: Long,
+                                  dataType: DataTypeInstances.Value,
+                                  dataTypeAct: String,
+                                  isDataTypeInferred: Boolean,
+                                  typeCounts: Map[String, Long],
+                                  histogram: Option[Distribution],
+                                  minLength:Double,
+                                  maxLength:Double,
+                                  avgLength:Double,
+                                  minValue:String,
+                                  maxValue:String)
+  extends ColumnProfile
+
+case class NumericColumnProfileCustom(
+                                 column: String,
+                                 completeness: Double,
+                                 approximateNumDistinctValues: Long,
+                                 dataType: DataTypeInstances.Value,
+                                 dataTypeAct: String,
+                                 isDataTypeInferred: Boolean,
+                                 typeCounts: Map[String, Long],
+                                 histogram: Option[Distribution],
+                                 mean: Option[Double],
+                                 maximum: Option[Double],
+                                 minimum: Option[Double],
+                                 sum: Option[Double],
+                                 stdDev: Option[Double],
+                                 approxPercentiles: Option[Seq[Double]])
+  extends ColumnProfile
 
 case class StandardColumnProfile(
     column: String,
     completeness: Double,
     approximateNumDistinctValues: Long,
     dataType: DataTypeInstances.Value,
+    dataTypeAct:String,
     isDataTypeInferred: Boolean,
     typeCounts: Map[String, Long],
     histogram: Option[Distribution],
@@ -51,6 +86,7 @@ case class NumericColumnProfile(
     completeness: Double,
     approximateNumDistinctValues: Long,
     dataType: DataTypeInstances.Value,
+    dataTypeAct:String,
     isDataTypeInferred: Boolean,
     typeCounts: Map[String, Long],
     histogram: Option[Distribution],
@@ -85,7 +121,7 @@ object ColumnProfiles {
 
         val columnProfileJson = new JsonObject()
         columnProfileJson.addProperty("column", profile.column)
-        columnProfileJson.addProperty("dataType", profile.dataType.toString)
+        columnProfileJson.addProperty("dataType", profile.dataTypeAct)
         columnProfileJson.addProperty("isDataTypeInferred", profile.isDataTypeInferred.toString)
 
         if (profile.typeCounts.nonEmpty) {

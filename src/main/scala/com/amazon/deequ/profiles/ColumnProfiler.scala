@@ -69,9 +69,26 @@ private[deequ] case class CategoricalColumnStatistics(histograms: Map[String, Di
   * `lowCardinalityHistogramThreshold` (approx.) distinct values
   *
   */
+
+case class DateCols(data:DataFrame, colsMap:Map[String,String])
+
 object ColumnProfiler {
 
   val DEFAULT_CARDINALITY_THRESHOLD = 120
+
+  def datesToNumeric(data:DataFrame):DateCols={
+    import org.apache.spark.sql.functions.unix_timestamp
+    val nndata =  data.schema.foldLeft(data){(tempDF, listValue) =>
+      {
+        listValue.dataType.simpleString match {
+          case "date" => tempDF.withColumn(listValue.name, unix_timestamp(tempDF(listValue.name)).cast(LongType))
+          case "timestamp" =>  tempDF.withColumn(listValue.name, tempDF(listValue.name).cast(LongType))
+          case _ => tempDF
+        }
+      }
+    }
+    DateCols(nndata,data.schema.map(a=>a.name->a.dataType.simpleString).toMap)
+  }
 
   /**
     * Profile a (potentially very large) dataset
@@ -85,7 +102,7 @@ object ColumnProfiler {
     * @return
     */
   private[deequ] def profile(
-      data: DataFrame,
+      dataT: DataFrame,
       restrictToColumns: Option[Seq[String]] = None,
       printStatusUpdates: Boolean = false,
       lowCardinalityHistogramThreshold: Int =
@@ -95,6 +112,9 @@ object ColumnProfiler {
       failIfResultsForReusingMissing: Boolean = false,
       saveInMetricsRepositoryUsingKey: Option[ResultKey] = None)
     : ColumnProfiles = {
+
+    val dataDates =     datesToNumeric(dataT)
+    val data = dataDates.data
 
     // Ensure that all desired columns exist
     restrictToColumns.foreach { restrictToColumns =>
@@ -190,7 +210,7 @@ object ColumnProfiler {
 
     val thirdPassResults = CategoricalColumnStatistics(histograms)
 
-    createProfiles(relevantColumns, genericStatistics, numericStatistics, thirdPassResults)
+    createProfiles(relevantColumns, genericStatistics, numericStatistics, thirdPassResults,dataDates)
   }
 
   private[this] def getRelevantColumns(
@@ -647,34 +667,31 @@ object ColumnProfiler {
       columns: Seq[String],
       genericStats: GenericColumnStatistics,
       numericStats: NumericColumnStatistics,
-      categoricalStats: CategoricalColumnStatistics)
+      categoricalStats: CategoricalColumnStatistics,
+      dataDates:DateCols)
     : ColumnProfiles = {
 
     val profiles = columns
       .map { name =>
-
+        println(s"name :: ${name}")
         val completeness = genericStats.completenesses(name)
         val approxNumDistinct = genericStats.approximateNumDistincts(name)
         val dataType = genericStats.typeOf(name)
+        val dataTypeAct = dataDates.colsMap.getOrElse(name,"NA")
         val isDataTypeInferred = genericStats.inferredTypes.contains(name)
         val histogram = categoricalStats.histograms.get(name)
-        val minLength = genericStats.minLength(name)
-        val maxLength = genericStats.maxLength(name)
-        val avgLength = genericStats.avgLength(name)
-        val minValue = genericStats.minValue(name)
-        val maxValue = genericStats.maxValue(name)
-
 
         val typeCounts = genericStats.typeDetectionHistograms.getOrElse(name, Map.empty)
 
         val profile = genericStats.typeOf(name) match {
 
           case Integral | Fractional =>
-            NumericColumnProfile(
+            NumericColumnProfileCustom(
               name,
               completeness,
               approxNumDistinct,
               dataType,
+              dataTypeAct,
               isDataTypeInferred,
               typeCounts,
               histogram,
@@ -686,19 +703,20 @@ object ColumnProfiler {
               numericStats.approxPercentiles.get(name))
 
           case _ =>
-            StandardColumnProfile(
+            StandardColumnProfileCustom(
               name,
               completeness,
               approxNumDistinct,
               dataType,
+              dataTypeAct,
               isDataTypeInferred,
               typeCounts,
               histogram,
-              minLength,
-              maxLength ,
-              avgLength,
-              minValue,
-              maxValue
+              genericStats.minLength(name),
+              genericStats.maxLength(name) ,
+              genericStats.avgLength(name),
+              genericStats.minValue(name),
+              genericStats.maxValue(name)
             )
         }
 

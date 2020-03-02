@@ -17,7 +17,7 @@
 package com.amazon.deequ.examples
 
 import com.amazon.deequ.examples.ExampleUtils.withSpark
-import com.amazon.deequ.profiles.{ColumnProfilerRunner, NumericColumnProfile}
+import com.amazon.deequ.profiles.{ColumnProfilerRunner, NumericColumnProfile, NumericColumnProfileCustom}
 
 case class RawData(productName: String, totalNumber: String, status: String, valuable: String)
 
@@ -59,7 +59,7 @@ private[examples] object DataProfilingExample extends App {
     }
 
     /* For numeric columns, we get descriptive statistics */
-    val totalNumberProfile = result.profiles("totalNumber").asInstanceOf[NumericColumnProfile]
+    val totalNumberProfile = result.profiles("totalNumber").asInstanceOf[NumericColumnProfileCustom]
 
     println(s"Statistics of 'totalNumber':\n" +
       s"\tminimum: ${totalNumberProfile.minimum.get}\n" +

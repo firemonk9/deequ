@@ -32,6 +32,8 @@ private[examples] object BasicExample extends App {
       Item(4, "Thingy D", "checkout https://thingd.ca", "low", 10),
       Item(5, "Thingy E", null, "high", 12))
 
+
+
     val verificationResult = VerificationSuite()
       .onData(data)
       .addCheck(
